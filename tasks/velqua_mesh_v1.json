@@ -1,0 +1,59 @@
+{
+  "task": "Ship Velqua Mesh v1.0",
+  "description": "Complete the Mesh coordination layer per VELQUA_MESH_BRIEF.md. All four modules must be built and tested. The Mesh tab must appear in the UI. The proxy must detect agent identity and inject shared memory.",
+  "working_dir": "/mnt/GameDrive/AI_Projects/The Collective/velqua",
+  "agent": "velqua",
+  "status": "pending",
+  "max_iterations": 25,
+  "criteria": [
+    {
+      "name": "tests_pass",
+      "type": "command",
+      "command": "python -m pytest tests/ -q --tb=short 2>&1 | tail -20",
+      "expect": "exit_0"
+    },
+    {
+      "name": "mesh_modules_exist",
+      "type": "file_exists",
+      "path": "backend/mesh/registry.py"
+    },
+    {
+      "name": "mesh_shared_memory_exists",
+      "type": "file_exists",
+      "path": "backend/mesh/shared_memory.py"
+    },
+    {
+      "name": "mesh_noteboard_exists",
+      "type": "file_exists",
+      "path": "backend/mesh/noteboard.py"
+    },
+    {
+      "name": "mesh_routes_exist",
+      "type": "file_exists",
+      "path": "backend/routes/mesh.py"
+    },
+    {
+      "name": "mesh_tests_exist",
+      "type": "file_exists",
+      "path": "tests/test_mesh.py"
+    },
+    {
+      "name": "readme_has_mesh_section",
+      "type": "grep_present",
+      "pattern": "## Mesh",
+      "paths": ["README.md"]
+    },
+    {
+      "name": "no_todos_in_mesh",
+      "type": "grep_absent",
+      "pattern": "TODO|FIXME|HACK|pass  #|raise NotImplementedError",
+      "paths": ["backend/mesh/"]
+    },
+    {
+      "name": "mesh_importable",
+      "type": "python_import",
+      "module": "backend.mesh"
+    }
+  ],
+  "initial_prompt": "# Task: Ship Velqua Mesh v1.0\n\nRead VELQUA_MESH_BRIEF.md in this directory. Build everything described in it.\n\nThe following files already exist and are partially built:\n- backend/mesh/__init__.py\n- backend/mesh/db.py\n- backend/mesh/registry.py\n- backend/mesh/shared_memory.py\n- backend/mesh/noteboard.py\n\nWhat still needs to be done:\n1. Complete any stub methods in the mesh modules (check for pass, NotImplementedError, TODOs)\n2. Create backend/routes/mesh.py with all endpoints from the brief\n3. Register mesh routes in backend/server.py\n4. Extend backend/proxy.py to detect agent identity via registry and inject shared memory\n5. Add Mesh tab to src/index.html and src/app.js\n6. Write tests/test_mesh.py covering registry, shared memory, noteboard, and routes\n7. Add ## Mesh section to README.md describing the feature\n\nConstraints:\n- All 569 existing tests must still pass\n- Do not break the existing proxy, memory, or provider systems\n- Use the existing SQLite patterns from backend/anamnesis/\n- MIT license, Python 3.10+\n\nWhen all criteria pass, say: DONE"
+}

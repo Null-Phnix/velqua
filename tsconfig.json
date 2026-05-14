@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ES2020",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM"],
+    "strict": true,
+    "outDir": "src",
+    "rootDir": "frontend/src",
+    "declaration": false,
+    "skipLibCheck": true,
+    "noEmitOnError": true
+  },
+  "include": ["frontend/src/**/*"]
+}

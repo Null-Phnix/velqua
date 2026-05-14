@@ -1,0 +1,58 @@
+[project]
+name = "velqua"
+version = "3.2.0"
+description = "Memory proxy for local LLMs — gives your AI persistent personal memory"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.20.0",
+    "httpx>=0.24.0",
+    "pydantic>=2.0.0",
+    "scikit-learn>=1.0.0",
+    "sentence-transformers>=2.2.0",
+    "cryptography>=41.0.0",
+]
+
+[project.optional-dependencies]
+tray = ["pystray>=0.19.0", "Pillow>=9.0.0"]
+desktop = ["pywebview>=4.0.0"]
+dev = ["pytest>=7.0.0", "pytest-asyncio>=0.21.0", "pytest-cov>=4.0.0"]
+
+[project.scripts]
+velqua = "backend.server:main"
+velqua-server = "backend.server:main"
+velqua-proxy = "backend.proxy:main"
+velqua-desktop = "backend.desktop:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["backend*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--ignore=tests/e2e --ignore=tests/smoke_test.py"
+pythonpath = [".", "backend"]
+asyncio_mode = "auto"
+markers = [
+    "integration: marks tests that call external services (deselect with '-m not integration')",
+]
+
+[tool.coverage.run]
+source = ["backend"]
+omit = [
+    "backend/anamnesis/*",   # Vendored library, tested separately
+    "backend/tray.py",       # System tray requires GUI
+    "backend/desktop.py",    # Desktop window requires GUI
+    "backend/build_exe.py",  # Build script, not testable
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if __name__",
+    "pragma: no cover",
+]

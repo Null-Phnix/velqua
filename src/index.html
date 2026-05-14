@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Velqua</title>
+  <meta
+    name="description"
+    content="Velqua is a transparent memory proxy for local and cloud LLMs, adding relevant memory to every request without changing your workflow."
+  />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand" aria-label="Velqua home">
+        <div class="brand-mark" aria-hidden="true">V</div>
+        <div class="brand-copy">
+          <h1>Velqua</h1>
+          <p>Transparent memory proxy for local and cloud LLMs</p>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <button id="refreshDashboardBtn" class="btn btn-secondary" aria-label="Refresh dashboard">
+          Refresh
+        </button>
+        <button id="openOnboardingBtn" class="btn btn-primary" aria-label="Open getting started guide">
+          Getting started
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="hero-card">
+        <div class="hero-copy">
+          <span class="eyebrow">Memory-first infrastructure</span>
+          <h2>Your AI apps keep context without changing your workflow</h2>
+          <p>
+            Point your apps at Velqua, import prior conversations, and let the proxy
+            inject the most relevant memory on every request.
+          </p>
+        </div>
+        <div class="hero-metrics" id="heroMetrics" aria-label="Key metrics">
+          <div class="metric-tile">
+            <span class="metric-label">Facts</span>
+            <strong class="metric-value" id="heroFacts">—</strong>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Episodes</span>
+            <strong class="metric-value" id="heroEpisodes">—</strong>
+          </div>
+          <div class="metric-tile">
+            <span class="metric-label">Providers</span>
+            <strong class="metric-value" id="heroProviders">—</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="dashboard-grid">
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Provider</h3>
+              <p>Choose the backend Velqua should proxy to.</p>
+            </div>
+          </div>
+
+          <div class="provider-card">
+            <label class="field" for="providerSelect">
+              <span>Active provider</span>
+              <select id="providerSelect" aria-label="Select active provider"></select>
+            </label>
+
+            <div class="provider-status" aria-live="polite">
+              <span class="status-dot" id="providerStatusDot" aria-hidden="true"></span>
+              <span id="providerStatusText">Loading providers…</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Import memory</h3>
+              <p>Bring in your first conversation export or memory file.</p>
+            </div>
+          </div>
+
+          <div class="import-card">
+            <input id="memoryFileInput" type="file" aria-label="Choose memory file to import" />
+            <button id="importMemoryBtn" class="btn btn-primary" aria-label="Import selected memory file">
+              Import file
+            </button>
+            <p class="helper-text" id="importStatus" aria-live="polite">
+              Supports the import flow configured by your Velqua backend.
+            </p>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>How the proxy works</h3>
+              <p>A quick explanation of the request path.</p>
+            </div>
+          </div>
+
+          <div class="steps-inline">
+            <div class="mini-step">
+              <span aria-hidden="true">1</span>
+              <p>Your app sends chat requests to <code>localhost:11435</code></p>
+            </div>
+            <div class="mini-step">
+              <span aria-hidden="true">2</span>
+              <p>Velqua retrieves relevant facts and recent episodes</p>
+            </div>
+            <div class="mini-step">
+              <span aria-hidden="true">3</span>
+              <p>The enriched request is forwarded to your chosen provider</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <div>
+              <h3>Connect an app</h3>
+              <p>Use these settings in OpenAI-compatible clients.</p>
+            </div>
+          </div>
+
+          <div class="connection-card">
+            <div class="kv-row">
+              <span>Base URL</span>
+              <code id="proxyBaseUrl">http://localhost:11435/v1</code>
+            </div>
+            <div class="kv-row">
+              <span>Chat endpoint</span>
+              <code>http://localhost:11435/v1/chat/completions</code>
+            </div>
+            <div class="kv-row">
+              <span>Ollama chat</span>
+              <code>http://localhost:11435/api/chat</code>
+            </div>
+            <button id="copyProxyUrlBtn" class="btn btn-secondary" aria-label="Copy proxy base URL">
+              Copy base URL
+            </button>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div id="toastRoot" class="toast-root" aria-live="polite" aria-atomic="true"></div>
+
+  <div
+    id="onboardingOverlay"
+    class="onboarding-overlay hidden"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="onboardingTitle"
+    aria-describedby="onboardingDescription"
+  >
+    <div class="onboarding-backdrop" data-close-onboarding aria-hidden="true"></div>
+    <div class="onboarding-modal">
+      <div class="onboarding-shell">
+        <aside class="onboarding-sidebar">
+          <div class="onboarding-sidebar-header">
+            <span class="eyebrow">First-run setup</span>
+            <h2 id="onboardingTitle">Welcome to Velqua</h2>
+            <p id="onboardingDescription">
+              Set up your provider, import your first memory, and connect an app in a few guided steps.
+            </p>
+          </div>
+
+          <div class="onboarding-progress" aria-label="Onboarding progress">
+            <div class="progress-bar" aria-hidden="true">
+              <div id="onboardingProgressBar" class="progress-bar-fill"></div>
+            </div>
+            <span id="onboardingProgressText">Step 1 of 4</span>
+          </div>
+
+          <ol class="wizard-steps" id="wizardSteps">
+            <li class="wizard-step active" data-step="0">
+              <span aria-hidden="true">1</span>
+              <div>
+                <strong>Choose provider</strong>
+                <p>Select where Velqua forwards requests.</p>
+              </div>
+            </li>
+            <li class="wizard-step" data-step="1">
+              <span aria-hidden="true">2</span>
+              <div>
+                <strong>Import first memory</strong>
+                <p>Seed Velqua with facts or conversation history.</p>
+              </div>
+            </li>
+            <li class="wizard-step" data-step="2">
+              <span aria-hidden="true">3</span>
+              <div>
+                <strong>Understand the proxy</strong>
+                <p>See what happens between your app and model.</p>
+              </div>
+            </li>
+            <li class="wizard-step" data-step="3">
+              <span aria-hidden="true">4</span>
+              <div>
+                <strong>Point an app at localhost</strong>
+                <p>Use the proxy URL in your client.</p>
+              </div>
+            </li>
+          </ol>
+        </aside>
+
+        <section class="onboarding-content">
+          <button id="closeOnboardingBtn" class="onboarding-close" aria-label="Close onboarding">×</button>
+
+          <div class="wizard-panels">
+            <section class="wizard-panel active" data-step-panel="0">
+              <span class="panel-kicker">Step 1</span>
+              <h3>Choose your provider</h3>
+              <p class="panel-lead">
+                Velqua sits in front of your LLM backend. Pick the provider you want it to forward requests to.
+              </p>
+
+              <div class="feature-callout">
+                <div class="callout-icon" aria-hidden="true">↗</div>
+                <div>
+                  <strong>Transparent routing</strong>
+                  <p>Your app talks to Velqua locally. Velqua forwards the enriched request to this provider.</p>
+                </div>
+              </div>
+
+              <label class="field" for="wizardProviderSelect">
+                <span>Provider</span>
+                <select id="wizardProviderSelect" aria-label="Select provider during onboarding"></select>
+              </label>
+
+              <div class="provider-preview" id="wizardProviderPreview">
+                <div class="provider-preview-row">
+                  <span>Selected provider</span>
+                  <strong id="wizardProviderName">—</strong>
+                </div>
+                <div class="provider-preview-row">
+                  <span>Status</span>
+                  <strong id="wizardProviderStatus">Ready</strong>
+                </div>
+              </div>
+            </section>
+
+            <section class="wizard-panel" data-step-panel="1">
+              <span class="panel-kicker">Step 2</span>
+              <h3>Import your first memory file</h3>
+              <p class="panel-lead">
+                Start with a conversation export, notes file, or memory dataset so Velqua has context to inject.
+              </p>
+
+              <div class="upload-dropzone" id="wizardDropzone" aria-label="Memory file upload area">
+                <input id="wizardFileInput" type="file" aria-label="Choose a file to import during onboarding" />
+                <div class="upload-dropzone-copy">
+                  <strong id="wizardFileName">Drop a file here or choose one</strong>
+                  <p>Once imported, Velqua can retrieve relevant facts on future requests.</p>
+                </div>
+              </div>
+
+              <div class="wizard-actions-inline">
+                <button id="wizardImportBtn" class="btn btn-primary" aria-label="Import selected onboarding file">
+                  Import file
+                </button>
+                <span class="helper-text" id="wizardImportStatus" aria-live="polite">No file selected yet.</span>
+              </div>
+            </section>
+
+            <section class="wizard-panel" data-step-panel="2">
+              <span class="panel-kicker">Step 3</span>
+              <h3>How Velqua works</h3>
+              <p class="panel-lead">
+                The proxy adds memory automatically, so your clients do not need custom prompt code.
+              </p>
+
+              <div class="proxy-flow">
+                <div class="flow-node">
+                  <span class="flow-node-number" aria-hidden="true">1</span>
+                  <strong>Your app</strong>
+                  <p>Sends a normal chat request to Velqua on localhost.</p>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-node">
+                  <span class="flow-node-number" aria-hidden="true">2</span>
+                  <strong>Velqua</strong>
+                  <p>Retrieves facts and episodes, then injects them into the request.</p>
+                </div>
+                <div class="flow-arrow" aria-hidden="true">→</div>
+                <div class="flow-node">
+                  <span class="flow-node-number" aria-hidden="true">3</span>
+                  <strong>Your provider</strong>
+                  <p>Receives the enriched prompt and returns the final response.</p>
+                </div>
+              </div>
+
+              <div class="glass-note">
+                <strong>Why this matters</strong>
+                <p>
+                  You keep your existing tools, but they become memory-aware because Velqua is the layer in between.
+                </p>
+              </div>
+            </section>
+
+            <section class="wizard-panel" data-step-panel="3">
+              <span class="panel-kicker">Step 4</span>
+              <h3>Point your app at localhost:11435</h3>
+              <p class="panel-lead">
+                Most OpenAI-compatible apps can connect immediately with the local proxy URL below.
+              </p>
+
+              <div class="connect-grid">
+                <div class="connect-card">
+                  <span>Base URL</span>
+                  <code id="wizardProxyBaseUrl">http://localhost:11435/v1</code>
+                </div>
+                <div class="connect-card">
+                  <span>Chat endpoint</span>
+                  <code>http://localhost:11435/v1/chat/completions</code>
+                </div>
+                <div class="connect-card">
+                  <span>Ollama apps</span>
+                  <code>http://localhost:11435/api/chat</code>
+                </div>
+              </div>
+
+              <div class="app-examples">
+                <div class="app-example">
+                  <strong>OpenAI-compatible clients</strong>
+                  <p>Set the base URL to <code>http://localhost:11435/v1</code>.</p>
+                </div>
+                <div class="app-example">
+                  <strong>Ollama-based apps</strong>
+                  <p>Point them at <code>http://localhost:11435</code> instead of <code>11434</code>.</p>
+                </div>
+              </div>
+
+              <div class="wizard-actions-inline">
+                <button id="wizardCopyProxyBtn" class="btn btn-secondary" aria-label="Copy onboarding proxy URL">
+                  Copy proxy URL
+                </button>
+                <button id="wizardFinishBtn" class="btn btn-primary" aria-label="Finish onboarding setup">
+                  Finish setup
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <footer class="onboarding-footer">
+            <button id="wizardBackBtn" class="btn btn-ghost" aria-label="Go to previous onboarding step">Back</button>
+            <div class="footer-spacer"></div>
+            <button id="wizardSkipBtn" class="btn btn-ghost" aria-label="Skip onboarding for now">Skip for now</button>
+            <button id="wizardNextBtn" class="btn btn-primary" aria-label="Go to next onboarding step">Next</button>
+          </footer>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
