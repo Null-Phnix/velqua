@@ -15,6 +15,7 @@ The license system is deliberately lenient:
 - Trial mode works indefinitely with a nag banner (not a hard lock)
 """
 import json
+import os
 import time
 from dataclasses import dataclass
 from enum import Enum
@@ -29,6 +30,8 @@ logger = get_logger("license")
 LEMONSQUEEZY_API = "https://api.lemonsqueezy.com/v1"
 VALIDATION_INTERVAL_SECONDS = 7 * 24 * 3600  # Re-validate weekly
 OFFLINE_GRACE_SECONDS = 30 * 24 * 3600  # 30-day offline grace
+
+DEV_MODE = os.getenv("VELQUA_DEV", "") in ("1", "true", "yes")
 
 
 class LicenseStatus(str, Enum):
@@ -104,6 +107,8 @@ class TierManager:
 
     def current_tier(self) -> LicenseTier:
         """Read current tier from cached license or default to free."""
+        if DEV_MODE:
+            return LicenseTier.PRO
         try:
             from backend.keystore import KeyStore
             ks = KeyStore(self._data_dir)
@@ -180,9 +185,13 @@ class LicenseManager:
     async def activate(self, key: str) -> ActivationResult:
         """
         Validate a license key against LemonSqueezy and cache the result.
-
-        Returns ActivationResult with success=True on valid key.
         """
+        if DEV_MODE and key == "dev":
+            return ActivationResult(
+                success=True, status=LicenseStatus.ACTIVE,
+                message="Dev mode — license bypassed",
+                license_key="dev", product_name="Velqua Pro",
+            )
         if not key or not key.strip():
             return ActivationResult(
                 success=False,
@@ -341,13 +350,13 @@ class LicenseManager:
     def check(self) -> ActivationResult:
         """
         Check current license status from cache.
-
-        Logic:
-        1. No cache → trial mode
-        2. Cache exists, validated recently → active
-        3. Cache exists, stale but within grace → active (needs revalidation)
-        4. Cache exists, beyond grace → expired
         """
+        if DEV_MODE:
+            return ActivationResult(
+                success=True, status=LicenseStatus.ACTIVE,
+                message="Dev mode — license bypassed",
+                license_key="dev", product_name="Velqua Pro",
+            )
         cache = self._load_cache()
 
         if not cache or not cache.get("key"):
