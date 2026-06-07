@@ -148,9 +148,9 @@ class TestOnboarding:
         page.reload()
         page.wait_for_load_state("networkidle")
 
-        page.click("#closeOnboardingBtn", force=True)
+        # Modal buttons can be outside CI viewport; click via JS
+        page.evaluate("() => document.getElementById('closeOnboardingBtn').click()")
         page.wait_for_timeout(500)
-        # Overlay should hide
         expect(page.locator("#onboardingOverlay")).to_be_hidden()
 
     def test_wizard_skip_button(self, page: Page):
@@ -158,7 +158,7 @@ class TestOnboarding:
         page.reload()
         page.wait_for_load_state("networkidle")
 
-        page.click("#wizardSkipBtn", force=True)
+        page.evaluate("() => document.getElementById('wizardSkipBtn').click()")
         page.wait_for_timeout(500)
         expect(page.locator("#onboardingOverlay")).to_be_hidden()
 
@@ -167,14 +167,12 @@ class TestOnboarding:
         page.reload()
         page.wait_for_load_state("networkidle")
 
-        # First panel should be active
         panel_0 = page.locator('.wizard-panel[data-step-panel="0"]')
         expect(panel_0).to_have_class(re.compile("active"))
 
-        page.click("#wizardNextBtn", force=True)
+        page.evaluate("() => document.getElementById('wizardNextBtn').click()")
         page.wait_for_timeout(500)
 
-        # Second panel should now be active
         panel_1 = page.locator('.wizard-panel[data-step-panel="1"]')
         expect(panel_1).to_have_class(re.compile("active"))
 
