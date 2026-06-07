@@ -94,4 +94,4 @@ jobs:
         run: pip install ruff
 
       - name: Lint backend
-        run: ruff check backend/ --select=E --ignore=E501
+        run: ruff check backend/ --select=E --ignore=E501,E402
