@@ -12,6 +12,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse as StarletteJSONResponse
 import uvicorn
 
 # Add both backend dir (for anamnesis) and project root (for backend.xxx) to path
@@ -45,8 +47,6 @@ app.add_middleware(
 
 # License check middleware — blocks API when license is expired (beyond grace).
 # Trial mode and active licenses pass through. Exempts license/health/static/root.
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.responses import JSONResponse as StarletteJSONResponse
 
 
 class LicenseMiddleware(BaseHTTPMiddleware):
